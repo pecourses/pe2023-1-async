@@ -3,16 +3,34 @@
 const weatherUrl =
   'https://api.open-meteo.com/v1/forecast?latitude=47.8517&longitude=35.1171&current_weather=true&timezone=auto';
 
+let isCelsiiDegree = true;
+
+const tempUnitBtn = document.getElementById('tempUnitBtn');
+tempUnitBtn.textContent = `Switch to ${isCelsiiDegree ? 'F' : 'C'}`;
+
+tempUnitBtn.onclick = switchTemperatureUnit;
+
+function switchTemperatureUnit() {
+  // поміняти значення прапорця на протилежне
+  isCelsiiDegree = !isCelsiiDegree;
+  // поміняти напис на кнопці
+  tempUnitBtn.textContent = `Switch to ${isCelsiiDegree ? 'F' : 'C'}`;
+  // завантажити дані з температурою в нових одиницях
+  fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=47.8517&longitude=35.1171&current_weather=true&timezone=auto${
+      isCelsiiDegree ? '' : '&temperature_unit=fahrenheit'
+    }`
+  )
+    .then(response => response.json())
+    .then(data => generateWeather(data))
+    .catch(err => console.log('error: ', err));
+}
+
 fetch(weatherUrl)
   .then(response => response.json())
   .then(data => generateWeather(data))
   .catch(err => console.log('error: ', err));
 
-// Example: відобразити на сторінці поточну температуру з одиницею виміру
-// відобразити темп. від'ємну синім кольором, 0 -чорним
-//                   додатню до 40 - зеленим, >=40 - червоним
-
-// Task: відобразити швидкість вітру з одиницею виміру
 function generateWeather({
   current_weather: { temperature, windspeed },
   current_weather_units: { temperature: tempUnit, windspeed: windUnit },
