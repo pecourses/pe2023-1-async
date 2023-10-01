@@ -1,49 +1,87 @@
 'use strict';
 
-let isCelsiiDegree = true;
+// status pending
 
-const tempUnitBtn = document.getElementById('tempUnitBtn');
-tempUnitBtn.onclick = switchTemperatureUnit;
-function switchTemperatureUnit() {
-  isCelsiiDegree = !isCelsiiDegree;
-  updateData();
+// status fullfilled (result - payload) -> then
+// status rejected   -> catch
+
+function promiseCb(resolve, reject) {
+  // actions
+  // resolve('success resut');
+  reject(new Error('something went wrong...'));
 }
 
-updateData();
+const promise = new Promise(promiseCb);
 
-function updateData() {
-  tempUnitBtn.textContent = `Switch to ${isCelsiiDegree ? 'F' : 'C'}`;
+promise
+  .then(data => console.log('data :>> ', data))
+  .catch(err => console.log('err :>> ', err));
 
-  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=47.8517&longitude=35.1171&current_weather=true&timezone=auto${
-    isCelsiiDegree ? '' : '&temperature_unit=fahrenheit'
-  }`;
+// Promise.resolve([{ user: 'Test' }]).then(data =>
+//   console.log('data :>> ', data)
+// );
+// Promise.reject().catch()
 
-  fetch(weatherUrl)
-    .then(response => response.json())
-    .then(data => generateWeather(data))
-    .catch(err => console.log('error: ', err));
-}
+console.log('end of sync code');
 
-function generateWeather({
-  current_weather: { temperature, windspeed },
-  current_weather_units: { temperature: tempUnit, windspeed: windUnit },
-}) {
-  const currentTemperatureEl = document.querySelector('.temp');
-  currentTemperatureEl.textContent = `${temperature} ${tempUnit}`;
-  currentTemperatureEl.style.color = calcTemperatureColor(temperature);
+// проміс - кіт Шредингера
 
-  const currentWindspeed = document.querySelector('.wind');
-  currentWindspeed.textContent = `${windspeed} ${windUnit}`;
-}
-
-function calcTemperatureColor(temperature) {
-  if (temperature < 0) {
-    return 'blue';
-  } else if (temperature === 0) {
-    return 'black';
-  } else if (temperature > 0 && temperature < 40) {
-    return 'green';
+const executor = function (resolve, reject) {
+  if (Math.random() < 0.5) {
+    resolve('cat is alive');
   } else {
-    return 'red';
+    reject(new Error('cat is not alive'));
   }
+};
+
+const shredCat = new Promise(executor);
+
+shredCat
+  .then(data => console.log('data :>> ', data))
+  .catch(err => console.log('err :>> ', err));
+
+// промісифікувати setTimeout
+// setTimeout(cb,1000)
+// delay(1000).then(cb)
+
+function delay(ms) {
+  const executor = function (res, rej) {
+    if (typeof ms !== 'number') {
+      rej(new TypeError('ms must be number'));
+    }
+    if (ms < 0 || !Number.isInteger(ms)) {
+      rej(new RangeError('ms must be positive integer value'));
+    }
+    setTimeout(res, ms);
+  };
+
+  return new Promise(executor);
+}
+
+// setTimeout(() => console.log('action is over '), 1000);
+delay(2000)
+  .then(() => console.log('action is over '))
+  .catch(err => console.log('err :>> ', err));
+
+// ----------------------------------------------------
+
+const src = 'https://klike.net/uploads/posts/2019-01/1547365376_1.jpg';
+
+loadImage(src)
+  .then(img => {
+    document.body.append(img);
+  })
+  .catch(e => console.log('e :>> ', e));
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.onload = () => {
+      res(img);
+    };
+    img.onerror = () => {
+      rej(new Error('image was not loaded'));
+    };
+  });
 }
